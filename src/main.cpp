@@ -1,13 +1,19 @@
 #include <csignal>
+#include <memory>
 #include <print>
 #include <sstream>
+#include <thread>
 
 #include <clipp.h>  // clipp for command-line parsing
 
 #include "common.h"
 #include "worker_manager.h"
 
-using namespace yggdrasil_cpp_genkeys;
+using yggdrasil_cpp_genkeys::Settings;
+using yggdrasil_cpp_genkeys::WorkerManager;
+
+namespace
+{
 
 /// Global pointer to WorkerManager for signal handler access
 std::unique_ptr<WorkerManager> g_manager;
@@ -22,9 +28,12 @@ std::unique_ptr<WorkerManager> g_manager;
  */
 void signal_handler(int signal)
 {
-    if (g_manager)
+    if ((signal == SIGINT) and (g_manager != nullptr)) {
         g_manager->Stop();
+    }
 }
+
+}  // namespace
 
 /**
  * @brief Main entry point for the Yggdrasil cryptographic key generator.
@@ -40,7 +49,7 @@ void signal_handler(int signal)
 int main(int argc, char* argv[])
 {
     // Register signal handler for Ctrl+C (SIGINT) for graceful shutdown
-    std::signal(SIGINT, signal_handler);
+    [[maybe_unused]] auto sighandler = std::signal(SIGINT, signal_handler);
 
     bool help = false;
 

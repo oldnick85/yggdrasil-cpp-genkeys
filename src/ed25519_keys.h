@@ -105,17 +105,17 @@ constexpr std::array<uint8_t, 1> GetPrefix()
  * @param public_key The Ed25519 public key to convert
  * @return IPv6_Addr The generated Yggdrasil IPv6 address 
  */
-IPv6_Addr AddrForKey(const PublicKey_t& public_key)
+inline IPv6_Addr AddrForKey(const PublicKey_t& public_key)
 {
     // Invert all bytes in the public key
-    std::array<uint8_t, 32> inverted;
-    for (size_t i = 0; i < 32; ++i) {
+    std::array<uint8_t, PublicKey_t::Size> inverted{};
+    for (size_t i = 0; i < PublicKey_t::Size; ++i) {
         inverted[i] = ~public_key.bytes[i];
     }
 
     IPv6_Addr addr{};
     std::vector<uint8_t> temp;
-    temp.reserve(32);
+    temp.reserve(PublicKey_t::Size);
 
     bool done = false;  // Flag to indicate we've passed the leading ones
     uint8_t ones = 0;   // Count of consecutive leading 1-bits
@@ -126,7 +126,7 @@ IPv6_Addr AddrForKey(const PublicKey_t& public_key)
     for (int idx = 0; idx < 8 * static_cast<int>(inverted.size()); ++idx) {
         // Extract the current bit (idx/8 = byte index, idx%8 = bit position)
         // 0x80 >> (idx%8) creates a mask for the bit, 7-(idx%8) shifts it to LSB
-        uint8_t bit =
+        const uint8_t bit =
             (inverted[idx / 8] & (0x80 >> (idx % 8))) >> (7 - (idx % 8));
 
         // Count leading ones
@@ -155,19 +155,19 @@ IPv6_Addr AddrForKey(const PublicKey_t& public_key)
     }
 
     // Construct the IPv6 address
-    auto prefix = GetPrefix();
+    const auto prefix = GetPrefix();
 
     // Copy the fixed prefix (0x02) to the beginning of the address
-    std::copy(prefix.begin(), prefix.end(), addr.bytes.begin());
+    std::ranges::copy(prefix, addr.bytes.begin());
 
     // Store the leading ones count in the next byte
     addr.bytes[prefix.size()] = ones;
 
     // Calculate how much space remains in the address (16 total bytes)
-    size_t remaining_space = addr.size() - prefix.size() - 1;  // 14
+    const size_t remaining_space = addr.size() - prefix.size() - 1;  // 14
 
     // Copy collected bits, but don't overflow the address
-    size_t copy_size = std::min(temp.size(), remaining_space);
+    const size_t copy_size = std::min(temp.size(), remaining_space);
     std::copy_n(temp.begin(), copy_size,
                 addr.bytes.begin() + prefix.size() + 1);
 

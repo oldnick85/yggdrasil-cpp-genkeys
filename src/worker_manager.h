@@ -23,7 +23,7 @@ class WorkerManager
      * 
      * @param settings Configuration parameters including thread count and duration limits.
      */
-    WorkerManager(const Settings& settings) : settings_(settings) {}
+    explicit WorkerManager(const Settings& settings) : settings_(settings) {}
 
     /**
      * @brief Main execution loop that runs workers and manages key evaluation.
@@ -42,15 +42,17 @@ class WorkerManager
         int count = 0;
         start_time_ = std::chrono::steady_clock::now();
 
+        constexpr auto SYNC_PERIOD = std::chrono::milliseconds(100);
+
         // Main coordination loop
         while (not stop_) {
             ++count;
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(SYNC_PERIOD);
 
             // Poll each worker for their current best key
             bool new_best = false;
             for (auto& worker : workers_) {
-                Candidate best = worker->GetBest();
+                const Candidate best = worker->GetBest();
 
                 if (best.IsBetter(global_best_, settings_.ipv6_nice)) {
                     global_best_ = best;
@@ -65,10 +67,10 @@ class WorkerManager
             // Check duration limit if specified
             if (settings_.max_duration != 0) {
                 const auto now = std::chrono::steady_clock::now();
-                const auto elapsed =
+                const auto elapsed = static_cast<uint64_t>(
                     duration_cast<std::chrono::duration<double>>(now -
                                                                  start_time_)
-                        .count();
+                        .count());
                 if (elapsed > settings_.max_duration) {
                     Stop();
                 }
@@ -97,7 +99,6 @@ class WorkerManager
     std::atomic<bool> stop_ = false;     ///< flag to signal termination
     std::chrono::steady_clock::time_point start_time_;  ///< start time
 
-   private:
     /**
      * @brief Creates and starts worker threads.
      * 
@@ -128,7 +129,9 @@ class WorkerManager
             thread.request_stop();
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        constexpr auto WAIT_FOR_STOP = std::chrono::milliseconds(500);
+
+        std::this_thread::sleep_for(WAIT_FOR_STOP);
     }
 
     /**
@@ -152,9 +155,9 @@ class WorkerManager
         const auto now = std::chrono::steady_clock::now();
         const auto duration =
             duration_cast<std::chrono::duration<double>>(now - start_time_);
-        const auto elapsed = duration.count();
+        const auto elapsed = static_cast<uint64_t>(duration.count());
         if (elapsed > 0) {
-            double rate = generated_keys_count / elapsed;
+            const auto rate = generated_keys_count / elapsed;
             std::println("----- {} --- {} keys tried",
                          format_duration_go_style(duration),
                          generated_keys_count);

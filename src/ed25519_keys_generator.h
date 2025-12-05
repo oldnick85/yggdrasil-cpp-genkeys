@@ -77,14 +77,18 @@ class Ed25519_KeysGenerator
 
     void Generate(Seed_t& seed)
     {
-        const auto result = crypto_sign_ed25519_seed_keypair(
+        [[maybe_unused]] const auto result = crypto_sign_ed25519_seed_keypair(
             keys_.public_key.data(), keys_.secret_key.data(), seed.data());
         assert(result == 0);
     }
 
     void SetSeed(const Seed_t& seed) { keys_.seed = seed; }
 
-    const Keys_t& Keys() const { return keys_; }
+    [[nodiscard]]
+    const Keys_t& Keys() const
+    {
+        return keys_;
+    }
 
    private:
     /**

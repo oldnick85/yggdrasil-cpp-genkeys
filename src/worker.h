@@ -47,12 +47,13 @@ class Worker
      * 
      * @param stoken Stop token for cooperative thread interruption.
      */
-    void Process(std::stop_token stoken)
+    void Process(const std::stop_token& stoken)
     {
+        constexpr uint64_t SYNC_PERIOD = 1000;
         while (!stoken.stop_requested()) {
             ++generated_keys_count_;
 
-            if ((generated_keys_count_ % 1000) == 0) {
+            if ((generated_keys_count_ % SYNC_PERIOD) == 0) {
                 Sync();
             }
 
@@ -65,9 +66,7 @@ class Worker
                 candidate.ipv6_zero_blocks = AddressZeroBlocks(candidate.addr);
             }
 
-            bool found = candidate.IsBetter(best_, settings_.ipv6_nice);
-
-            if (found) {
+            if (candidate.IsBetter(best_, settings_.ipv6_nice)) {
                 NewBest(candidate);
             }
         }
@@ -80,12 +79,10 @@ class Worker
      */
     Candidate GetBest() const
     {
-        //std::lock_guard locker(mtx_);
-        //return local_best_keys_;
-
-        std::lock_guard locker(mtx_);
+        const std::lock_guard locker(mtx_);
         Candidate result;
         const volatile Candidate* src = &local_best_;
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
         std::memcpy(&result, const_cast<const Candidate*>(src),
                     sizeof(Candidate));
         std::atomic_signal_fence(std::memory_order_seq_cst);
@@ -113,7 +110,6 @@ class Worker
     std::atomic<uint64_t> local_generated_keys_count_ = 0;
     ///< thread-safe counter for external access
 
-   private:
     /**
      * @brief Synchronizes local with global
      * 
@@ -138,7 +134,7 @@ class Worker
                          num_, best_.zero_bits, best_.keys.public_key.ToHex(),
                          best_.addr.ToString());
         }
-        std::lock_guard locker(mtx_);
+        const std::lock_guard locker(mtx_);
         local_best_ = best_;
     }
 };
