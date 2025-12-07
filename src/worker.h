@@ -47,7 +47,8 @@ class Worker
      * 
      * @param stoken Stop token for cooperative thread interruption.
      */
-    void Process(const std::stop_token& stoken)
+    void Process(
+        std::stop_token stoken)  // NOLINT(performance-unnecessary-value-param)
     {
         constexpr uint64_t SYNC_PERIOD = 1000;
         while (!stoken.stop_requested()) {

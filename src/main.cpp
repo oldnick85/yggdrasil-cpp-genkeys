@@ -7,6 +7,7 @@
 #include <clipp.h>  // clipp for command-line parsing
 
 #include "common.h"
+#include "version.h"  // Generated version header
 #include "worker_manager.h"
 
 using yggdrasil_cpp_genkeys::Settings;
@@ -75,7 +76,8 @@ int main(int argc, char* argv[])
         auto man_page = clipp::make_man_page(cli, argv[0]);
         std::ostringstream oss;
         oss << man_page;
-        std::println("yggdrasil-cpp-genkeys\n\n{}", oss.str());
+        std::println("{}\n\n{}", yggdrasil_cpp_genkeys::get_version_string(),
+                     oss.str());
         return help ? 0 : 1;
     }
 

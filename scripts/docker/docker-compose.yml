@@ -1,0 +1,50 @@
+services:
+  # Linux build and test services
+  linux-build:
+    build:
+      context: ../../
+      dockerfile: scripts/docker/linux/Dockerfile
+    volumes:
+      - ../../.:/workspace
+      - conan-cache:/root/.conan2
+    command: [ "build", "Release", "build-linux" ]
+
+  linux-test:
+    build:
+      context: ../../
+      dockerfile: scripts/docker/linux/Dockerfile
+    volumes:
+      - ../../.:/workspace
+      - conan-cache:/root/.conan2
+    command: [ "test", "Release", "build-linux" ]
+
+  linux-format:
+    build:
+      context: ../../
+      dockerfile: scripts/docker/linux/Dockerfile
+    volumes:
+      - ../../.:/workspace
+    command: [ "format" ]
+
+  linux-tidy:
+    build:
+      context: ../../
+      dockerfile: scripts/docker/linux/Dockerfile
+    volumes:
+      - ../../.:/workspace
+      - conan-cache:/root/.conan2
+    command: [ "tidy" ]
+
+  linux-all:
+    build:
+      context: ../../
+      dockerfile: scripts/docker/linux/Dockerfile
+    volumes:
+      - .:/workspace
+      - conan-cache:/root/.conan2
+    command: [ "all", "Release", "build-linux" ]
+
+# Persistent volumes for caching
+volumes:
+  conan-cache:
+    driver: local
