@@ -11,10 +11,12 @@ namespace yggdrasil_cpp_genkeys
  */
 struct Settings
 {
-    size_t threads_count = 0;   ///< threads for parallel key generation.
-    uint64_t max_duration = 0;  ///< execution time in seconds
-    bool verbose = false;       ///< verbose output mode
-    bool ipv6_nice = false;     ///< search nice-looking address
+    uint threads_count = 0;  ///< threads for parallel key generation.
+    uint max_duration = 0;   ///< execution time in seconds
+    uint target_leading_zeros =
+        0;                 ///< target number of leading zero bits in public key
+    bool verbose = false;  ///< verbose output mode
+    bool ipv6_nice = false;  ///< search nice-looking address
 };
 
 inline std::string add_fraction(uint64_t fraction, int precision)

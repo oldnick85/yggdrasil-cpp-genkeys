@@ -64,6 +64,9 @@ int main(int argc, char* argv[])
              clipp::integer("SEC", settings.max_duration)
                  .doc("Maximum execution time in seconds (default: 0 - no "
                       "limit)"),
+         clipp::option("-z", "--target-zeros") &
+             clipp::integer("BITS", settings.target_leading_zeros)
+                 .doc("Target number of leading zero bits in public key"),
          clipp::option("-v", "--verbose")
              .set(settings.verbose)
              .doc("Enable verbose output with additional statistics"),

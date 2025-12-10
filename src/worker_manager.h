@@ -75,6 +75,13 @@ class WorkerManager
                     Stop();
                 }
             }
+
+            // Check target leading zeros is reached
+            if (settings_.target_leading_zeros != 0) {
+                if (global_best_.zero_bits >= settings_.target_leading_zeros) {
+                    Stop();
+                }
+            }
         }
 
         StopWorkers();

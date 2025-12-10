@@ -126,13 +126,14 @@ Run the program without arguments to start searching for keys with default setti
 
 ### ⚙️ Command Line Options
 
-| Option            | Description                                                     |
-|-------------------|-----------------------------------------------------------------|
-| -t, --threads N   | Number of worker threads (default: 0 = CPU core count)          |
-| -T, --timeout SEC | Maximum execution time in seconds (default: 0 = no limit)       |
-| -v, --verbose     | Enable verbose output with additional statistics                |
-| -n, --ipv6-nice   | Search for zero blocks in IPv6 address instead of higher NodeID |
-| -h, --help        | Show help message                                               |
+| Option             | Description                                                     |
+|--------------------|-----------------------------------------------------------------|
+| -t, --threads N    | Number of worker threads (default: 0 = CPU core count)          |
+| -T, --timeout SEC  | Maximum execution time in seconds (default: 0 = no limit)       |
+| -z, --target-zeros | Target number of leading zero bits in public key                |
+| -v, --verbose      | Enable verbose output with additional statistics                |
+| -n, --ipv6-nice    | Search for zero blocks in IPv6 address instead of higher NodeID |
+| -h, --help         | Show help message                                               |
 
 ### 📝 Examples
 
