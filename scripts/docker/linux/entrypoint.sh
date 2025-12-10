@@ -12,7 +12,7 @@ case $ACTION in
     "build")
         echo "Building project for Linux (Ubuntu 25.10)..."
 
-        conan profile detect
+        conan profile detect --force
 
         cd /workspace
 
