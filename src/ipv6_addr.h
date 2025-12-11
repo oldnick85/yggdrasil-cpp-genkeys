@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <format>
+
 #include "bytes.h"
 
 namespace yggdrasil_cpp_genkeys
@@ -29,16 +32,26 @@ class IPv6_Addr : public BaseKey_t<16U>
      * @note This method does not implement IPv6 compression (replacing consecutive
      *       zero groups with "::") - it always outputs all 8 groups.
      */
+    [[nodiscard]]
     std::string ToString() const
     {
-        std::array<uint16_t, 8> groups{};
-        for (size_t i = 0; i < 8; ++i) {
-            groups[i] = (bytes[2 * i] << 8) | bytes[2 * i + 1];
+        constexpr std::size_t MaxIPv6Len = 40;
+        std::string str;
+        str.reserve(MaxIPv6Len);
+        std::size_t counter = 0;
+        uint16_t group = 0;
+        for (const auto& byte : bytes) {
+            group = (group * 256) + byte;
+            ++counter;
+            if (counter % 2 == 0) {
+                if (counter > 2) {
+                    str.append(":");
+                }
+                str.append(std::format("{:x}", group));
+                group = 0;
+            }
         }
-
-        return std::format("{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}", groups[0],
-                           groups[1], groups[2], groups[3], groups[4],
-                           groups[5], groups[6], groups[7]);
+        return str;
     }
 };
 

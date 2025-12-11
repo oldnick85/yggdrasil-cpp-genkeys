@@ -27,15 +27,15 @@ class Worker
      * sets up initial best key values, and initializes the global best key
      * with a sentinel value (0xFF in first byte).
      */
-    Worker(const Settings& settings, size_t num)
-        : settings_(settings), num_(num)
+    Worker(const Settings& settings, size_t num,
+           ThreadSafeQueue<Candidate>* queue)
+        : settings_(settings), num_(num), queue_(queue)
     {
         // Generate initial random key pair
         generator_.Generate(true);
 
         best_.keys = generator_.Keys();
         best_.zero_bits = LeadingZeroBits(best_.keys.public_key);
-        local_best_ = best_;
     }
 
     /**
@@ -47,12 +47,14 @@ class Worker
      * 
      * @param stoken Stop token for cooperative thread interruption.
      */
-    void Process(std::stop_token stoken)
+    void Process(
+        std::stop_token stoken)  // NOLINT(performance-unnecessary-value-param)
     {
+        constexpr uint64_t SYNC_PERIOD = 1000;
         while (!stoken.stop_requested()) {
             ++generated_keys_count_;
 
-            if ((generated_keys_count_ % 1000) == 0) {
+            if ((generated_keys_count_ % SYNC_PERIOD) == 0) {
                 Sync();
             }
 
@@ -65,31 +67,10 @@ class Worker
                 candidate.ipv6_zero_blocks = AddressZeroBlocks(candidate.addr);
             }
 
-            bool found = candidate.IsBetter(best_, settings_.ipv6_nice);
-
-            if (found) {
+            if (candidate.IsBetter(best_, settings_.ipv6_nice)) {
                 NewBest(candidate);
             }
         }
-    }
-
-    /**
-     * @brief Retrieves the current local best keys (thread-safe).
-     * 
-     * @return reference to the current local best keys.
-     */
-    Candidate GetBest() const
-    {
-        //std::lock_guard locker(mtx_);
-        //return local_best_keys_;
-
-        std::lock_guard locker(mtx_);
-        Candidate result;
-        const volatile Candidate* src = &local_best_;
-        std::memcpy(&result, const_cast<const Candidate*>(src),
-                    sizeof(Candidate));
-        std::atomic_signal_fence(std::memory_order_seq_cst);
-        return result;
     }
 
     /**
@@ -105,15 +86,14 @@ class Worker
    private:
     Settings settings_;
     size_t num_ = 0;
+    ThreadSafeQueue<Candidate>* queue_ = nullptr;
     Ed25519_KeysGenerator generator_;  ///< key pair generator
     Candidate best_;                   ///< best candidate found by this worker
     mutable std::mutex mtx_;           ///< mutex for thread-safety
-    Candidate local_best_;             ///< best found by this worker
     uint64_t generated_keys_count_ = 0;  ///< counter of generated keys
     std::atomic<uint64_t> local_generated_keys_count_ = 0;
     ///< thread-safe counter for external access
 
-   private:
     /**
      * @brief Synchronizes local with global
      * 
@@ -138,8 +118,8 @@ class Worker
                          num_, best_.zero_bits, best_.keys.public_key.ToHex(),
                          best_.addr.ToString());
         }
-        std::lock_guard locker(mtx_);
-        local_best_ = best_;
+        const std::lock_guard locker(mtx_);
+        queue_->push_back(best_);
     }
 };
 

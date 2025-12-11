@@ -84,6 +84,37 @@ cmake --build .
 
 The executable will be available at src/yggdrasil-cpp-genkeys.
 
+## 🐋 Docker Compose Development Workflow
+
+### 📋 Overview
+
+This project uses Docker Compose to provide a consistent development environment for building, testing, and analyzing the C++ codebase. 
+All development tasks can be performed through standardized Docker commands, ensuring consistent results across different machines.
+
+**⚠️ Important Warning! Always execute commands from the project's root directory to ensure proper path resolution.**
+
+### 🚀 Available Commands
+
+🔨 Build the Project
+```bash
+docker compose -f scripts/docker/docker-compose.yml run --rm linux-build
+```
+
+🧪 Run Tests
+```bash
+docker compose -f scripts/docker/docker-compose.yml run --rm linux-test
+```
+
+🎨 Check Code Formatting
+```bash
+docker compose -f scripts/docker/docker-compose.yml run --rm linux-format
+```
+
+🔍 Static Code Analysis
+```bash
+docker compose -f scripts/docker/docker-compose.yml run --rm linux-tidy
+```
+
 ## 🎮 Usage
 
 ### 🏁 Basic Usage
@@ -95,13 +126,14 @@ Run the program without arguments to start searching for keys with default setti
 
 ### ⚙️ Command Line Options
 
-| Option            | Description                                                     |
-|-------------------|-----------------------------------------------------------------|
-| -t, --threads N   | Number of worker threads (default: 0 = CPU core count)          |
-| -T, --timeout SEC | Maximum execution time in seconds (default: 0 = no limit)       |
-| -v, --verbose     | Enable verbose output with additional statistics                |
-| -n, --ipv6-nice   | Search for zero blocks in IPv6 address instead of higher NodeID |
-| -h, --help        | Show help message                                               |
+| Option             | Description                                                     |
+|--------------------|-----------------------------------------------------------------|
+| -t, --threads N    | Number of worker threads (default: 0 = CPU core count)          |
+| -T, --timeout SEC  | Maximum execution time in seconds (default: 0 = no limit)       |
+| -z, --target-zeros | Target number of leading zero bits in public key                |
+| -v, --verbose      | Enable verbose output with additional statistics                |
+| -n, --ipv6-nice    | Search for zero blocks in IPv6 address instead of higher NodeID |
+| -h, --help         | Show help message                                               |
 
 ### 📝 Examples
 
