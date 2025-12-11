@@ -3,6 +3,7 @@
 #include <print>
 
 #include "common.h"
+#include "thread_safe_queue.h"
 #include "worker.h"
 
 namespace yggdrasil_cpp_genkeys
@@ -49,13 +50,11 @@ class WorkerManager
             ++count;
             std::this_thread::sleep_for(SYNC_PERIOD);
 
-            // Poll each worker for their current best key
             bool new_best = false;
-            for (auto& worker : workers_) {
-                const Candidate best = worker->GetBest();
-
-                if (best.IsBetter(global_best_, settings_.ipv6_nice)) {
-                    global_best_ = best;
+            auto best = queue_.try_pop_front();
+            if (best.has_value()) {
+                if ((*best).IsBetter(global_best_, settings_.ipv6_nice)) {
+                    global_best_ = *best;
                     new_best = true;
                 }
             }
@@ -105,6 +104,7 @@ class WorkerManager
     Candidate global_best_;              ///< current global best
     std::atomic<bool> stop_ = false;     ///< flag to signal termination
     std::chrono::steady_clock::time_point start_time_;  ///< start time
+    ThreadSafeQueue<Candidate> queue_;  ///< queue for best candidates
 
     /**
      * @brief Creates and starts worker threads.
@@ -115,7 +115,7 @@ class WorkerManager
     void RunWorkers()
     {
         for (size_t i = 0; i < settings_.threads_count; ++i) {
-            workers_.push_back(std::make_unique<Worker>(settings_, i));
+            workers_.push_back(std::make_unique<Worker>(settings_, i, &queue_));
         }
 
         for (auto& worker : workers_) {
